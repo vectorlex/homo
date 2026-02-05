@@ -1,24 +1,38 @@
 <!DOCTYPE html>
-<html id="容器">
+<html id="container">
 
 <head>
 	<meta charset="UTF-8">
 	<title>恶臭数字论证器</title>
 	<meta name="viewport" content="width=device-width,user-scalable=0">
 	<meta name="description" content="数字恶臭化工具">
+
+	<script>
+		window.MathJax = {
+			tex: {
+				inlineMath: [['$', '$'], ['\\(', '\\)']],
+				displayMath: [['$$', '$$'], ['\\[', '\\]']],
+				processEscapes: true,
+				processEnvironments: true,
+				packages: ['base', 'ams', 'noerrors', 'noundefined']
+			},
+			options: {
+				skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+				ignoreHtmlClass: 'tex2jax_ignore'
+			},
+			loader: { load: ['[tex]/ams'] }
+		};
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+
 	<style>
 		html {
 			text-align: center;
-			background: #114514;
+			background: #1b1b1f;
 			color: #ffffff;
 			transition: 1s ease;
 			font-family: sans-serif;
 			word-break: break-all;
-		}
-
-		html[数字=""] {
-			background: #1b1b1f;
-			color: #ffffff;
 		}
 
 		head {
@@ -33,7 +47,6 @@
 			font-size: 2em;
 			margin: 0.67em;
 			line-height: 45px;
-
 		}
 
 		meta[name="description"] {
@@ -48,6 +61,7 @@
 		body {
 			margin: 0;
 			padding: 0 0 100px;
+			font-size: 16px;
 		}
 
 		a {
@@ -60,19 +74,41 @@
 			font-size: 20px;
 			line-height: 26px;
 			text-align: center;
-
 			padding: 8px 12px;
 			border: 0;
 			width: 80%;
 			max-width: 300px;
 			-webkit-appearance: none;
+			border-radius: 5px;
+			margin-top: 20px;
 		}
 
-		#恶臭 {
+		#output1 {
 			font-size: 24px;
 			font-family: "Comic Sans MS", script;
 			padding: 40px 10px 100px;
+			min-height: 100px;
+			overflow-wrap: break-word;
+			line-height: 1.5;
+		}
 
+		#output1 .math-container {
+			display: inline-block;
+			text-align: center;
+			margin: 10px 0;
+			padding: 10px;
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 5px;
+			max-width: 90%;
+			overflow-x: auto;
+		}
+
+		#output1 mjx-container {
+			display: inline-block;
+			text-align: center;
+			margin: 0 auto;
+			max-width: 100%;
+			overflow-x: auto;
 		}
 
 		footer {
@@ -91,26 +127,119 @@
 			margin: 0.5em;
 			color: inherit;
 		}
+
+		@media (max-width: 768px) {
+			body {
+				font-size: 14px;
+			}
+
+			#output1 {
+				font-size: 18px;
+				padding: 20px 5px 50px;
+			}
+
+			input {
+				font-size: 16px;
+				width: 90%;
+			}
+
+			mjx-container {
+				font-size: 0.9em;
+			}
+		}
+
+		.mjx-chtml {
+			font-size: 1.1em !important;
+		}
+
+		.loading {
+			color: #aaa;
+			font-style: italic;
+		}
+
+		.formula-display {
+			display: inline-block;
+			margin: 10px auto;
+			padding: 15px;
+			border-radius: 8px;
+			max-width: 95%;
+			overflow-x: auto;
+		}
 	</style>
 </head>
 
 <body>
-	<input id="学弟" placeholder="输入任意数字" type="number">
-	<div id="恶臭"></div>
+	<input id="input1" placeholder="点击输入数字" type="number">
+	<div id="output1"></div>
 
 	<footer>
-		<a href="https://github.com/itorr/homo">fork from it</a>
+		<a href="https://github.com/itorr/homo">原项目</a>
 	</footer>
 
 	<script src="homo.js"></script>
 	<script>
-		学弟.oninput = _ => {
-			const 数字 = 学弟.value === '' ? '' : Number(学弟.value);
-			恶臭.innerHTML = 数字 + ' = <big>' + homo(数字) + '</big>';
-			容器.setAttribute('数字', 数字);
-		};
+		if (typeof module === 'undefined') {
+			window.homo = homo;
+		}
 
-		学弟.oninput();
+		window.addEventListener('DOMContentLoaded', () => {
+			update_homo();
+			document.getElementById('input1').oninput = update_homo;
+		});
+
+		function update_homo() {
+			const input1 = document.getElementById('input1');
+			const output1 = document.getElementById('output1');
+			const container = document.getElementById('container');
+
+			const input_value = input1.value;
+			const num1 = input_value === '' ? '' : Number(input_value);
+
+			container.setAttribute('num1', num1);
+
+			if (input_value === '') {
+				output1.innerHTML = '输入一个数字!';
+				return;
+			}
+
+			if (isNaN(num1)) {
+				output1.innerHTML = '输入有效数字!';
+				return;
+			}
+
+			setTimeout(() => {
+				try {
+					const formula = homo(num1);
+
+					const latex_expression = formula.startsWith('$') ? formula : `$${formula}$`;
+
+					output1.innerHTML = `
+						<div class="formula-display">
+							<div id="formula-${Date.now()}">${latex_expression}</div>
+						</div>
+					`;
+
+					if (window.MathJax && window.MathJax.typesetPromise) {
+						window.MathJax.typesetPromise([output1]).catch(err => {
+							console.error(err);
+							output1.innerHTML = `<div>${num1} = ${formula}</div>`;
+						});
+					}
+				} catch (error) {
+					console.error(error);
+				}
+			}, 10);
+		}
+
+		function init() {
+			update_homo();
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
 	</script>
 </body>
 
