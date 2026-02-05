@@ -70,12 +70,14 @@
 		}
 
 		input {
+			background: #111111;
+			color: #ffffff;
 			outline: 0;
 			font-size: 20px;
 			line-height: 26px;
 			text-align: center;
 			padding: 8px 12px;
-			border: 0;
+			border: 2;
 			width: 80%;
 			max-width: 300px;
 			-webkit-appearance: none;
@@ -198,7 +200,7 @@
 			container.setAttribute('num1', num1);
 
 			if (input_value === '') {
-				output1.innerHTML = '输入一个数字!';
+				output1.innerHTML = '';
 				return;
 			}
 
